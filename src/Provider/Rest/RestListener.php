@@ -51,6 +51,8 @@ class RestListener implements EventSubscriberInterface
             $data = json_decode($request->getContent(), true);
             $request->request->replace(is_array($data) ? $data : []);
         }
+
+        $request->attributes->set('_locale', $request->getPreferredLanguage());
     }
 
     /**

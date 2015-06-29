@@ -12,6 +12,7 @@ namespace Euskadi31\Silex\Provider\Rest;
 
 use Euskadi31\Silex\Provider\Rest\RestListener;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpFoundation\Request;
 use Silex\Application;
 
 class RestListenerTest extends \PHPUnit_Framework_TestCase
@@ -38,4 +39,32 @@ class RestListenerTest extends \PHPUnit_Framework_TestCase
 
         $listener->onKernelRequest($getResponseEventMock);
     }
+
+    public function testKernelResponseWithMasterRequest()
+    {
+        $appMock = $this->getMock('Silex\Application');
+
+        $request = Request::create('/users', 'GET', [], [], [], [], json_encode(['foo' => 'bar']));
+        $request->setRequestFormat('json');
+        $request->headers->set('Content-Type', 'application/json');
+        $request->headers->set('Accept-Language', 'fr');
+
+        $getResponseEventMock = $this->getMockBuilder('Symfony\Component\HttpKernel\Event\GetResponseEvent')
+                     ->disableOriginalConstructor()
+                     ->getMock();
+        $getResponseEventMock->expects($this->once())
+            ->method('isMasterRequest')
+            ->will($this->returnValue(true));
+        $getResponseEventMock->expects($this->once())
+            ->method('getRequest')
+            ->will($this->returnValue($request));
+
+        $listener = new RestListener($appMock);
+
+        $listener->onKernelRequest($getResponseEventMock);
+
+        $this->assertEquals('fr', $request->attributes->get('_locale'));
+    }
+
+
 }
