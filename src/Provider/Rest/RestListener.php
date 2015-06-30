@@ -64,7 +64,6 @@ class RestListener implements EventSubscriberInterface
     public function onKernelException(GetResponseForExceptionEvent $event)
     {
         $exception = $event->getException();
-        $message = $exception->getMessage();
 
         $e = FlattenException::create($exception);
 
