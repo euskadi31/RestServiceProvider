@@ -41,30 +41,23 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(404, $response->getStatusCode());
 
-        $this->assertEquals(json_encode([
-            'error' => [
-                'message'   => 'No route found for "GET /me1"',
-                'type'      => 'NotFoundHttpException',
-                'code'      => 404,
-                'file'      => realpath(__DIR__ . '/../../') . '/vendor/symfony/http-kernel/EventListener/RouterListener.php',
-                'line'      => 159
-            ]
-        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), $response->getContent());
+        $json = json_decode($response->getContent(), true);
 
+        $this->assertEquals('No route found for "GET /me1"', $json['error']['message']);
+        $this->assertEquals('NotFoundHttpException', $json['error']['type']);
+        $this->assertEquals(404, $json['error']['code']);
+        $this->assertTrue(isset($json['error']['exception']));
 
         $response = $app->handle(Request::create('/error'));
 
         $this->assertEquals(500, $response->getStatusCode());
 
-        $this->assertEquals(json_encode([
-            'error' => [
-                'message'   => 'Bad Exception',
-                'type'      => 'Exception',
-                'code'      => 500,
-                'file'      => __FILE__,
-                'line'      => 31
-            ]
-        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), $response->getContent());
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertEquals('Bad Exception', $json['error']['message']);
+        $this->assertEquals('Exception', $json['error']['type']);
+        $this->assertEquals(500, $json['error']['code']);
+        $this->assertTrue(isset($json['error']['exception']));
     }
 
     public function testRequest()

@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\Debug\Exception\FlattenException;
 use Silex\Application;
 
 /**
@@ -62,9 +63,12 @@ class RestListener implements EventSubscriberInterface
      */
     public function onKernelException(GetResponseForExceptionEvent $event)
     {
-        $e = $event->getException();
+        $exception = $event->getException();
+        $message = $exception->getMessage();
 
-        $code = ($e instanceof HttpExceptionInterface) ? $e->getStatusCode() : $e->getCode();
+        $e = FlattenException::create($exception);
+
+        $code = ($exception instanceof HttpExceptionInterface) ? $exception->getStatusCode() : $exception->getCode();
 
         if ($code < 100 || $code >= 600) {
             $code = 500;
@@ -72,15 +76,14 @@ class RestListener implements EventSubscriberInterface
 
         $error = [
             'error' => [
-                'message'   => $e->getMessage(),
-                'type'      => join('', array_slice(explode('\\', get_class($e)), -1)),
+                'message'   => $exception->getMessage(),
+                'type'      => join('', array_slice(explode('\\', get_class($exception)), -1)),
                 'code'      => $code
             ]
         ];
 
         if ($this->app['debug']) {
-            $error['error']['file'] = $e->getFile();
-            $error['error']['line'] = $e->getLine();
+            $error['error']['exception'] = $e->toArray();
         }
 
         $event->setResponse($this->app->json($error, $code));
