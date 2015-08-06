@@ -83,6 +83,8 @@ class FieldsBag extends ArrayObject
     {
         $this[$parameter] = true;
 
+        $this->process($this->getArrayCopy());
+
         return $this;
     }
 

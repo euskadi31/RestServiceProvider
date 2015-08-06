@@ -47,6 +47,25 @@ class FieldsBagTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($fields->has('phone'));
     }
 
+    public function testGenerateKeys()
+    {
+        $fields = new FieldsBag([
+            'name' => true,
+            'email' => true
+        ]);
+
+        $fields['translates'] = new FieldsBag([
+            'id' => true,
+            'title' => true
+        ]);
+
+        $this->assertFalse($fields->has('id'));
+
+        $fields->addParameter('id');
+
+        $this->assertTrue($fields->has('id'));
+    }
+
     public function testDefaults()
     {
         $fields = new FieldsBag([
