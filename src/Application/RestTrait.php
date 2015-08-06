@@ -34,12 +34,8 @@ trait RestTrait
         $request = $this['request_stack']->getMasterRequest();
 
         if ($request->query->has('fields')) {
-            $fields = array_flip(explode(
-                ',',
-                $request->query->get('fields')
-            ));
-
-            $fields['id'] = 1;
+            $fields = $this['rest.fields'];
+            $fields->addParameter('id');
 
             foreach ($data as $key => $value) {
                 if (is_numeric($key)) {
@@ -49,12 +45,12 @@ trait RestTrait
                     }
 
                     foreach ($value as $key2 => $value2) {
-                        if (!isset($fields[$key2])) {
+                        if (!$fields->has($key2)) {
                             unset($data[$key][$key2]);
                         }
                     }
                 } else {
-                    if (!isset($fields[$key])) {
+                    if (!$fields->has($key)) {
                         unset($data[$key]);
                     }
                 }

@@ -11,6 +11,7 @@
 namespace Euskadi31\Silex\Provider;
 
 use Euskadi31\Silex\Application\RestTrait;
+use Euskadi31\Silex\Provider\RestServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Silex\Application;
 use ArrayObject;
@@ -20,6 +21,7 @@ class RestTraitTest extends \PHPUnit_Framework_TestCase
     protected function getApplication()
     {
         $app = new ApplicationTest();
+        $app->register(new RestServiceProvider);
 
         $users = [
             [

@@ -61,17 +61,29 @@ class FieldsBag
     }
 
     /**
+     * Add parameter
+     *
+     * @param string $parameter
+     */
+    public function addParameter($parameter)
+    {
+        $this->parameters[$parameter] = true;
+
+        return $this;
+    }
+
+    /**
      * Check field
      *
-     * @param string $name
+     * @param string $parameter
      * @return boolean
      */
-    public function has($name)
+    public function has($parameter)
     {
         if ($this->parametersIsEmpty) {
-            return isset($this->defaults[$name]);
+            return isset($this->defaults[$parameter]);
         }
 
-        return isset($this->parameters[$name]);
+        return isset($this->parameters[$parameter]);
     }
 }
