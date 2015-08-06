@@ -64,6 +64,7 @@ class FieldsBag
      * Add parameter
      *
      * @param string $parameter
+     * @return FieldsBag
      */
     public function addParameter($parameter)
     {
