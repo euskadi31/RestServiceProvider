@@ -11,7 +11,6 @@
 namespace Euskadi31\Silex\Application;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
-use ArrayObject;
 
 /**
  * Rest trait.

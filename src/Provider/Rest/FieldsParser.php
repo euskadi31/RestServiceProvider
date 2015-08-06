@@ -31,8 +31,9 @@ class FieldsParser
         $key    = '';
         $value  = '';
         $chars  = str_split($fields);
+        $len    = count($chars);
 
-        for ($i = 0; $i < count($chars); $i++) {
+        for ($i = 0; $i < $len; $i++) {
             $char = $chars[$i];
 
             if ($char == '{') {
