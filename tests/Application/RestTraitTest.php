@@ -89,6 +89,21 @@ class RestTraitTest extends \PHPUnit_Framework_TestCase
         ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT), $response->getContent());
     }
 
+    public function testFieldsParameterWithError()
+    {
+        $app = $this->getApplication();
+
+        $response = $app->handle(Request::create('/me1?fields=email'));
+
+        $this->assertEquals(404, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertEquals('No route found for "GET /me1"', $json['error']['message']);
+        $this->assertEquals('NotFoundHttpException', $json['error']['type']);
+        $this->assertEquals(404, $json['error']['code']);
+    }
+
     public function testPrettyPrintParameter()
     {
         $app = $this->getApplication();

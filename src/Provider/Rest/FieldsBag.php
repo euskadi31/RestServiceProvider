@@ -10,25 +10,15 @@
 
 namespace Euskadi31\Silex\Provider\Rest;
 
+use ArrayObject;
+
 /**
  * FieldsBag
  *
  * @author Axel Etcheverry <axel@etcheverry.biz>
  */
-class FieldsBag
+class FieldsBag extends ArrayObject
 {
-    /**
-     * Parameter storage.
-     *
-     * @var array
-     */
-    protected $parameters;
-
-    /**
-     * @var boolean
-     */
-    protected $parametersIsEmpty;
-
     /**
      * Default parameters.
      *
@@ -37,14 +27,37 @@ class FieldsBag
     protected $defaults;
 
     /**
+     * @var array
+     */
+    protected $keys = [];
+
+    /**
      *
      * @param array $parameters
      */
-    public function __construct(array $parameters)
+    public function __construct(array $parameters = [])
     {
-        $this->defaults             = [];
-        $this->parameters           = array_flip($parameters);
-        $this->parametersIsEmpty    = (count($this->parameters) == 0);
+        $this->defaults = [];
+
+        parent::__construct($parameters);
+    }
+
+    /**
+     * Process fields keys
+     *
+     * @param  array       $data
+     * @param  string|null $parent
+     * @return void
+     */
+    protected function process(array $data, $parent = null)
+    {
+        foreach ($data as $key => $value) {
+            if ($value instanceof FieldsBag) {
+                $this->process($value->getArrayCopy(), $key . '.');
+            }
+
+            $this->keys[$parent . $key] = true;
+        }
     }
 
     /**
@@ -68,7 +81,7 @@ class FieldsBag
      */
     public function addParameter($parameter)
     {
-        $this->parameters[$parameter] = true;
+        $this[$parameter] = true;
 
         return $this;
     }
@@ -81,10 +94,14 @@ class FieldsBag
      */
     public function has($parameter)
     {
-        if ($this->parametersIsEmpty) {
+        if ($this->count() == 0) {
             return isset($this->defaults[$parameter]);
         }
 
-        return isset($this->parameters[$parameter]);
+        if (empty($this->keys)) {
+            $this->process($this->getArrayCopy());
+        }
+
+        return isset($this->keys[$parameter]);
     }
 }

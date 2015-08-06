@@ -16,16 +16,43 @@ class FieldsBagTest extends \PHPUnit_Framework_TestCase
 {
     public function testFields()
     {
-        $fields = new FieldsBag(['name', 'email']);
+        $fields = new FieldsBag([
+            'name' => true,
+            'email' => true
+        ]);
 
         $this->assertTrue($fields->has('name'));
         $this->assertTrue($fields->has('email'));
         $this->assertFalse($fields->has('phone'));
     }
 
+    public function testHasField()
+    {
+        $fields = new FieldsBag([
+            'name' => true,
+            'email' => true
+        ]);
+
+        $fields['translates'] = new FieldsBag([
+            'id' => true,
+            'title' => true
+        ]);
+
+        $this->assertTrue($fields->has('name'));
+        $this->assertTrue($fields->has('email'));
+        $this->assertTrue($fields->has('translates'));
+        $this->assertTrue($fields->has('translates.id'));
+        $this->assertTrue($fields->has('translates.title'));
+        $this->assertFalse($fields->has('translates.program'));
+        $this->assertFalse($fields->has('phone'));
+    }
+
     public function testDefaults()
     {
-        $fields = new FieldsBag(['name', 'email']);
+        $fields = new FieldsBag([
+            'name' => true,
+            'email' => true
+        ]);
 
         $fields->setDefaults(['name', 'email', 'phone']);
 
@@ -41,7 +68,9 @@ class FieldsBagTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($fields->has('email'));
         $this->assertTrue($fields->has('phone'));
 
-        $fields = new FieldsBag(['summary']);
+        $fields = new FieldsBag([
+            'summary' => true
+        ]);
 
         $fields->setDefaults(['name', 'email', 'phone']);
 
@@ -50,5 +79,4 @@ class FieldsBagTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($fields->has('email'));
         $this->assertFalse($fields->has('phone'));
     }
-
 }

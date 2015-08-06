@@ -32,10 +32,24 @@ class RestServiceProvider implements ServiceProviderInterface, EventListenerProv
         };
 
         $app['rest.fields'] = function($app) {
-            $fields = $app['request_stack']->getCurrentRequest()->query->get('fields', '');
-            $fields = (array) explode(',', $fields);
+            $request = $app['request_stack']->getCurrentRequest();
 
-            return new Rest\FieldsBag($fields);
+            $fields = $request->query->get('fields', '');
+            if (!empty($fields)) {
+                $parser = $app['rest.fields.parser'];
+
+                return $parser->parse($fields);
+            }
+
+            return new Rest\FieldsBag();
+        };
+
+        $app['rest.fields.parser'] = function($app) {
+            return new Rest\FieldsParser;
+        };
+
+        $app['rest.filter'] = function($app) {
+            return new Rest\FieldsFilter($app['rest.fields']);
         };
     }
 

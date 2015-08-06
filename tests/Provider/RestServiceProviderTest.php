@@ -19,34 +19,12 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
 {
     public function testRegister()
     {
-        $that = $this;
-
         $app = new Application(['debug' => true]);
 
         $app->register(new RestServiceProvider);
 
         $app->get('/me', function() {
             return 'Hi!';
-        });
-
-        $app->get('/fields', function(Request $request) use ($app, $that) {
-            $fields = $app['rest.fields'];
-
-            $that->assertInstanceOf('Euskadi31\Silex\Provider\Rest\FieldsBag', $fields);
-
-            $that->assertTrue($fields->has('name'));
-            $that->assertTrue($fields->has('email'));
-            $that->assertFalse($fields->has('phone'));
-        });
-
-        $app->get('/fields-empty', function(Request $request) use ($app, $that) {
-            $fields = $app['rest.fields'];
-
-            $that->assertInstanceOf('Euskadi31\Silex\Provider\Rest\FieldsBag', $fields);
-
-            $that->assertFalse($fields->has('name'));
-            $that->assertFalse($fields->has('email'));
-            $that->assertFalse($fields->has('phone'));
         });
 
         $app->get('/error', function() {
@@ -80,10 +58,87 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Exception', $json['error']['type']);
         $this->assertEquals(500, $json['error']['code']);
         $this->assertTrue(isset($json['error']['exception']));
+    }
+
+    public function testFieldsParameter()
+    {
+        $that = $this;
+
+        $app = new Application(['debug' => true]);
+
+        $app->register(new RestServiceProvider);
+
+        $app->get('/fields', function(Request $request) use ($app, $that) {
+            $fields = $app['rest.fields'];
+
+            $that->assertInstanceOf('Euskadi31\Silex\Provider\Rest\FieldsBag', $fields);
+
+            $that->assertTrue($fields->has('name'));
+            $that->assertTrue($fields->has('email'));
+            $that->assertFalse($fields->has('phone'));
+        });
 
         $response = $app->handle(Request::create('/fields?fields=name,email'));
+    }
+
+    public function testNotFieldsParameter()
+    {
+        $that = $this;
+
+        $app = new Application(['debug' => true]);
+
+        $app->register(new RestServiceProvider);
+
+        $app->get('/fields-empty', function(Request $request) use ($app, $that) {
+            $fields = $app['rest.fields'];
+
+            $response = '';
+            $response .= var_export($fields instanceof \Euskadi31\Silex\Provider\Rest\FieldsBag, true);
+            $response .= PHP_EOL;
+            $response .= var_export($fields->has('name'), true);
+            $response .= PHP_EOL;
+            $response .= var_export($fields->has('email'), true);
+            $response .= PHP_EOL;
+            $response .= var_export($fields->has('phone'), true);
+
+            return $response;
+        });
 
         $response = $app->handle(Request::create('/fields-empty'));
+
+        $this->assertEquals(
+            'true' . PHP_EOL . 'false' . PHP_EOL . 'false' . PHP_EOL . 'false',
+            $response->getContent()
+        );
+    }
+
+    public function testEmptyFieldsParameter()
+    {
+        $app = new Application(['debug' => true]);
+
+        $app->register(new RestServiceProvider);
+
+        $app->get('/fields-empty', function(Request $request) use ($app) {
+            $fields = $app['rest.fields'];
+
+            $response = '';
+            $response .= var_export($fields instanceof \Euskadi31\Silex\Provider\Rest\FieldsBag, true);
+            $response .= PHP_EOL;
+            $response .= var_export($fields->has('name'), true);
+            $response .= PHP_EOL;
+            $response .= var_export($fields->has('email'), true);
+            $response .= PHP_EOL;
+            $response .= var_export($fields->has('phone'), true);
+
+            return $response;
+        });
+
+        $response = $app->handle(Request::create('/fields-empty?fields='));
+
+        $this->assertEquals(
+            'true' . PHP_EOL . 'false' . PHP_EOL . 'false' . PHP_EOL . 'false',
+            $response->getContent()
+        );
     }
 
     public function testRequest()

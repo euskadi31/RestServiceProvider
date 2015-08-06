@@ -33,28 +33,11 @@ trait RestTrait
     {
         $request = $this['request_stack']->getMasterRequest();
 
-        if ($request->query->has('fields')) {
+        if ($request->query->has('fields') && !($status >= 400 && $status < 500)) {
             $fields = $this['rest.fields'];
             $fields->addParameter('id');
 
-            foreach ($data as $key => $value) {
-                if (is_numeric($key)) {
-                    if ($value instanceof ArrayObject) {
-                        $value = $value->getArrayCopy();
-                        $data[$key] = $value;
-                    }
-
-                    foreach ($value as $key2 => $value2) {
-                        if (!$fields->has($key2)) {
-                            unset($data[$key][$key2]);
-                        }
-                    }
-                } else {
-                    if (!$fields->has($key)) {
-                        unset($data[$key]);
-                    }
-                }
-            }
+            $data = $this['rest.filter']->filter($data);
         }
 
         $flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
