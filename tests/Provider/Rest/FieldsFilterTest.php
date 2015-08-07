@@ -68,7 +68,7 @@ class FieldsFilterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $parser = new FieldsParser;
-        $fields = $parser->parse('translates{id,locale,title,program,material},user{id,firstname,email},id,create_at');
+        $fields = $parser->parse('translates{locale,title,program,material},user{id,firstname,email},create_at');
 
         $filter = new FieldsFilter($fields);
         $dataFiltered = $filter->filter($data);

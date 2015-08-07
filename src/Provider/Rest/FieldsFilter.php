@@ -49,7 +49,7 @@ class FieldsFilter
             if (is_numeric($key)) {
                 $data[$key] = $this->process($value, $fields);
             } else {
-                if (!$fields->has($key)) {
+                if (!$fields->has($key) && $key != 'id') {
                     unset($data[$key]);
                 } else if (is_array($value) && $fields->has($key)) {
                     $data[$key] = $this->process($value, $fields[$key]);
