@@ -39,7 +39,7 @@ class FieldsFilter
      * @param  FieldsBag         $fields
      * @return array
      */
-    private function process($data, FieldsBag $fields)
+    private function process($data, FieldsBag $fields = null)
     {
         foreach ($data as $key => $value) {
             if ($value instanceof ArrayObject) {
@@ -49,10 +49,13 @@ class FieldsFilter
             if (is_numeric($key)) {
                 $data[$key] = $this->process($value, $fields);
             } else {
-                if (!$fields->has($key) && $key != 'id') {
+                if (!empty($fields) && !$fields->has($key) && $key != 'id') {
                     unset($data[$key]);
-                } else if (is_array($value) && $fields->has($key)) {
-                    $data[$key] = $this->process($value, $fields[$key]);
+                } else if (is_array($value) && !empty($fields) && $fields->has($key)) {
+                    $data[$key] = $this->process(
+                        $value,
+                        is_bool($fields[$key]) ? null : $fields[$key]
+                    );
                 }
             }
         }
