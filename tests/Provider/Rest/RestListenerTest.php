@@ -66,5 +66,30 @@ class RestListenerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('fr', $request->attributes->get('_locale'));
     }
 
+    public function testKernelExceptionWithHeader()
+    {
+        $that = $this;
 
+        $appMock = new Application;
+
+        $exceptionMock = new \Symfony\Component\HttpKernel\Exception\HttpException(401, 'foo', null, [
+            'WWW-Authenticate' => 'Bearer foo'
+        ]);
+
+        $getResponseForExceptionEventMock = $this->getMockBuilder('Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent')
+                     ->disableOriginalConstructor()
+                     ->getMock();
+        $getResponseForExceptionEventMock->expects($this->once())
+            ->method('getException')
+            ->will($this->returnValue($exceptionMock));
+        $getResponseForExceptionEventMock->expects($this->once())
+            ->method('setResponse')
+            ->will($this->returnCallback(function($response) use ($that) {
+                $that->assertEquals('Bearer foo', $response->headers->get('WWW-Authenticate'));
+            }));
+
+        $listener = new RestListener($appMock);
+
+        $listener->onKernelException($getResponseForExceptionEventMock);
+    }
 }

@@ -63,11 +63,18 @@ class RestListener implements EventSubscriberInterface
      */
     public function onKernelException(GetResponseForExceptionEvent $event)
     {
+        $headers = [];
+
         $exception = $event->getException();
 
         $e = FlattenException::create($exception);
 
-        $code = ($exception instanceof HttpExceptionInterface) ? $exception->getStatusCode() : $exception->getCode();
+        if ($exception instanceof HttpExceptionInterface) {
+            $headers = $exception->getHeaders();
+            $code = $exception->getStatusCode();
+        } else {
+            $code = $exception->getCode();
+        }
 
         if ($code < 100 || $code >= 600) {
             $code = 500;
@@ -85,7 +92,7 @@ class RestListener implements EventSubscriberInterface
             $error['error']['exception'] = $e->toArray();
         }
 
-        $event->setResponse($this->app->json($error, $code));
+        $event->setResponse($this->app->json($error, $code, $headers));
     }
 
     /**
