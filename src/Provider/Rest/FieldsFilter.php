@@ -11,6 +11,8 @@
 namespace Euskadi31\Silex\Provider\Rest;
 
 use ArrayObject;
+use IteratorAggregate;
+use ArrayIterator;
 
 /**
  * FieldsFilter
@@ -33,6 +35,62 @@ class FieldsFilter
     }
 
     /**
+     * Process data object
+     *
+     * @param  ArrayObject    $data
+     * @param  FieldsBag|null $fields
+     * @return ArrayObject
+     */
+    private function processObject(ArrayObject $data, FieldsBag $fields = null)
+    {
+        $it = $data->getIterator();
+
+        foreach ($it as $key => $value) {
+            if (is_numeric($key)) {
+                $it->offsetSet($key, $this->process($value, $fields));
+            } else {
+                if (!empty($fields) && !$fields->has($key) && $key != 'id') {
+                    $it->offsetUnset($key);
+                } else if ((is_array($value) || $value instanceof ArrayObject) && !empty($fields) && $fields->has($key)) {
+                    $it->offsetSet($key, $this->process(
+                        $value,
+                        is_bool($fields[$key]) ? null : $fields[$key]
+                    ));
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Process data array
+     *
+     * @param  array          $data
+     * @param  FieldsBag|null $fields
+     * @return array
+     */
+    private function processArray(array $data, FieldsBag $fields = null)
+    {
+        foreach ($data as $key => $value) {
+            if (is_numeric($key)) {
+                $data[$key] = $this->process($value, $fields);
+            } else {
+                if (!empty($fields) && !$fields->has($key) && $key != 'id') {
+                    unset($data[$key]);
+                } else if ((is_array($value) || $value instanceof ArrayObject) && !empty($fields) && $fields->has($key)) {
+                    $data[$key] = $this->process(
+                        $value,
+                        is_bool($fields[$key]) ? null : $fields[$key]
+                    );
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
      * Process data
      *
      * @param  array|ArrayObject $data
@@ -41,23 +99,10 @@ class FieldsFilter
      */
     private function process($data, FieldsBag $fields = null)
     {
-        foreach ($data as $key => $value) {
-            if ($value instanceof ArrayObject) {
-                $value = $value->getArrayCopy();
-            }
-
-            if (is_numeric($key)) {
-                $data[$key] = $this->process($value, $fields);
-            } else {
-                if (!empty($fields) && !$fields->has($key) && $key != 'id') {
-                    unset($data[$key]);
-                } else if (is_array($value) && !empty($fields) && $fields->has($key)) {
-                    $data[$key] = $this->process(
-                        $value,
-                        is_bool($fields[$key]) ? null : $fields[$key]
-                    );
-                }
-            }
+        if ($data instanceof ArrayObject) {
+            return $this->processObject($data, $fields);
+        } else if (is_array($data)) {
+            return $this->processArray($data, $fields);
         }
 
         return $data;
