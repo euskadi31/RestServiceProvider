@@ -11,8 +11,6 @@
 namespace Euskadi31\Silex\Provider\Rest;
 
 use ArrayObject;
-use IteratorAggregate;
-use ArrayIterator;
 
 /**
  * FieldsFilter
