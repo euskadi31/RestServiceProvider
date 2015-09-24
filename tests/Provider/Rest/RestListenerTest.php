@@ -21,7 +21,7 @@ class RestListenerTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals([
             KernelEvents::REQUEST   => [['onKernelRequest', Application::EARLY_EVENT]],
-            KernelEvents::EXCEPTION => [['onKernelException', Application::EARLY_EVENT]]
+            KernelEvents::EXCEPTION => [['onKernelException', -8]]
         ], RestListener::getSubscribedEvents());
     }
 
