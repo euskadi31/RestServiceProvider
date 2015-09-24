@@ -102,7 +102,7 @@ class RestListener implements EventSubscriberInterface
     {
         return [
             KernelEvents::REQUEST   => [['onKernelRequest', Application::EARLY_EVENT]],
-            KernelEvents::EXCEPTION => [['onKernelException', Application::EARLY_EVENT]]
+            KernelEvents::EXCEPTION => [['onKernelException', -8]]
         ];
     }
 }
