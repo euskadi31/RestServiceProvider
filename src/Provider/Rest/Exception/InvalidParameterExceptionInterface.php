@@ -17,5 +17,10 @@ namespace Euskadi31\Silex\Provider\Rest\Exception;
  */
 interface InvalidParameterExceptionInterface
 {
+    /**
+     * Get parameter name
+     *
+     * @return string
+     */
     public function getParameter();
 }
