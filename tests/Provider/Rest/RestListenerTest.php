@@ -11,6 +11,8 @@
 namespace Euskadi31\Silex\Provider\Rest;
 
 use Euskadi31\Silex\Provider\Rest\RestListener;
+use Euskadi31\Silex\Provider\Rest\Exception\ErrorCollectionException;
+use Euskadi31\Silex\Provider\Rest\Exception\InvalidParameterExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpFoundation\Request;
 use Silex\Application;
@@ -77,8 +79,8 @@ class RestListenerTest extends \PHPUnit_Framework_TestCase
         ]);
 
         $getResponseForExceptionEventMock = $this->getMockBuilder('Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent')
-                     ->disableOriginalConstructor()
-                     ->getMock();
+            ->disableOriginalConstructor()
+            ->getMock();
         $getResponseForExceptionEventMock->expects($this->once())
             ->method('getException')
             ->will($this->returnValue($exceptionMock));
@@ -91,5 +93,63 @@ class RestListenerTest extends \PHPUnit_Framework_TestCase
         $listener = new RestListener($appMock);
 
         $listener->onKernelException($getResponseForExceptionEventMock);
+    }
+
+    public function testKernelExceptionWithErrorCollectionException()
+    {
+        $that = $this;
+
+        $appMock = new Application;
+
+        $collection = new ErrorCollectionException(
+            [
+                new ExceptionDemo('foo', 10400),
+                new ExceptionDemo('foo2', 10800)
+            ],
+            4,
+            [
+                'WWW-Authenticate' => 'Bearer foo'
+            ]
+        );
+
+        $getResponseForExceptionEventMock = $this->getMockBuilder('Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $getResponseForExceptionEventMock->expects($this->once())
+            ->method('getException')
+            ->will($this->returnValue($collection));
+        $getResponseForExceptionEventMock->expects($this->once())
+            ->method('setResponse')
+            ->will($this->returnCallback(function($response) use ($that) {
+                $that->assertEquals('Bearer foo', $response->headers->get('WWW-Authenticate'));
+                $that->assertEquals(json_encode([
+                    'errors' => [
+                        [
+                            'message'   => 'foo',
+                            'type'      => 'ExceptionDemo',
+                            'code'      => 10400,
+                            'parameter' => 'username'
+                        ],
+                        [
+                            'message'   => 'foo2',
+                            'type'      => 'ExceptionDemo',
+                            'code'      => 10800,
+                            'parameter' => 'username'
+                        ],
+                    ]
+                ]), $response->getContent());
+            }));
+
+        $listener = new RestListener($appMock);
+
+        $listener->onKernelException($getResponseForExceptionEventMock);
+    }
+}
+
+class ExceptionDemo extends \Exception implements InvalidParameterExceptionInterface
+{
+    public function getParameter()
+    {
+        return 'username';
     }
 }

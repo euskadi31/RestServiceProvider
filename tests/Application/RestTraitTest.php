@@ -99,9 +99,9 @@ class RestTraitTest extends \PHPUnit_Framework_TestCase
 
         $json = json_decode($response->getContent(), true);
 
-        $this->assertEquals('No route found for "GET /me1"', $json['error']['message']);
-        $this->assertEquals('NotFoundHttpException', $json['error']['type']);
-        $this->assertEquals(404, $json['error']['code']);
+        $this->assertEquals('No route found for "GET /me1"', $json['errors'][0]['message']);
+        $this->assertEquals('NotFoundHttpException', $json['errors'][0]['type']);
+        $this->assertEquals(0, $json['errors'][0]['code']);
     }
 
     public function testPrettyPrintParameter()

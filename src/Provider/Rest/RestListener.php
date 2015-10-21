@@ -57,6 +57,31 @@ class RestListener implements EventSubscriberInterface
     }
 
     /**
+     * Process exception
+     *
+     * @param  \Exception $exception
+     * @return array
+     */
+    protected function processException(\Exception $exception)
+    {
+        $error = [
+            'message'   => $exception->getMessage(),
+            'type'      => join('', array_slice(explode('\\', get_class($exception)), -1)),
+            'code'      => $exception->getCode()
+        ];
+
+        if ($exception instanceof Exception\InvalidParameterExceptionInterface) {
+            $error['parameter'] = $exception->getParameter();
+        }
+
+        if ($this->app['debug']) {
+            $error['exception'] = FlattenException::create($exception)->toArray();
+        }
+
+        return $error;
+    }
+
+    /**
      *
      * @param  GetResponseForExceptionEvent $event
      * @return void
@@ -67,32 +92,30 @@ class RestListener implements EventSubscriberInterface
 
         $exception = $event->getException();
 
-        $e = FlattenException::create($exception);
-
         if ($exception instanceof HttpExceptionInterface) {
             $headers = $exception->getHeaders();
             $code = $exception->getStatusCode();
         } else {
-            $code = $exception->getCode();
+            $code = 500;
         }
 
         if ($code < 100 || $code >= 600) {
             $code = 500;
         }
 
-        $error = [
-            'error' => [
-                'message'   => $exception->getMessage(),
-                'type'      => join('', array_slice(explode('\\', get_class($exception)), -1)),
-                'code'      => $code
-            ]
+        $response = [
+            'errors' => []
         ];
 
-        if ($this->app['debug']) {
-            $error['error']['exception'] = $e->toArray();
+        if ($exception instanceof Exception\ErrorCollectionException) {
+            foreach ($exception as $ex) {
+                $response['errors'][] = $this->processException($ex);
+            }
+        } else {
+            $response['errors'][] = $this->processException($exception);
         }
 
-        $event->setResponse($this->app->json($error, $code, $headers));
+        $event->setResponse($this->app->json($response, $code, $headers));
     }
 
     /**

@@ -28,7 +28,7 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
         });
 
         $app->get('/error', function() {
-            throw new Exception('Bad Exception');
+            throw new Exception('Bad Exception', 10400);
         });
 
         $this->assertInstanceOf('Euskadi31\Silex\Provider\Rest\RestListener', $app['rest.listener']);
@@ -43,10 +43,10 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
 
         $json = json_decode($response->getContent(), true);
 
-        $this->assertEquals('No route found for "GET /me1"', $json['error']['message']);
-        $this->assertEquals('NotFoundHttpException', $json['error']['type']);
-        $this->assertEquals(404, $json['error']['code']);
-        $this->assertTrue(isset($json['error']['exception']));
+        $this->assertEquals('No route found for "GET /me1"', $json['errors'][0]['message']);
+        $this->assertEquals('NotFoundHttpException', $json['errors'][0]['type']);
+        $this->assertEquals(0, $json['errors'][0]['code']);
+        $this->assertTrue(isset($json['errors'][0]['exception']));
 
         $response = $app->handle(Request::create('/error'));
 
@@ -54,10 +54,10 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
 
         $json = json_decode($response->getContent(), true);
 
-        $this->assertEquals('Bad Exception', $json['error']['message']);
-        $this->assertEquals('Exception', $json['error']['type']);
-        $this->assertEquals(500, $json['error']['code']);
-        $this->assertTrue(isset($json['error']['exception']));
+        $this->assertEquals('Bad Exception', $json['errors'][0]['message']);
+        $this->assertEquals('Exception', $json['errors'][0]['type']);
+        $this->assertEquals(10400, $json['errors'][0]['code']);
+        $this->assertTrue(isset($json['errors'][0]['exception']));
     }
 
     public function testFieldsParameter()
@@ -68,7 +68,7 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
 
         $app->register(new RestServiceProvider);
 
-        $app->get('/fields', function(Request $request) use ($app, $that) {
+        $app->get('/fields', function() use ($app, $that) {
             $fields = $app['rest.fields'];
 
             $that->assertInstanceOf('Euskadi31\Silex\Provider\Rest\FieldsBag', $fields);
@@ -78,18 +78,16 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
             $that->assertFalse($fields->has('phone'));
         });
 
-        $response = $app->handle(Request::create('/fields?fields=name,email'));
+        $app->handle(Request::create('/fields?fields=name,email'));
     }
 
     public function testNotFieldsParameter()
     {
-        $that = $this;
-
         $app = new Application(['debug' => true]);
 
         $app->register(new RestServiceProvider);
 
-        $app->get('/fields-empty', function(Request $request) use ($app, $that) {
+        $app->get('/fields-empty', function() use ($app) {
             $fields = $app['rest.fields'];
 
             $response = '';
@@ -118,7 +116,7 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
 
         $app->register(new RestServiceProvider);
 
-        $app->get('/fields-empty', function(Request $request) use ($app) {
+        $app->get('/fields-empty', function() use ($app) {
             $fields = $app['rest.fields'];
 
             $response = '';
@@ -200,10 +198,12 @@ class RestProviderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(404, $response->getStatusCode());
 
         $this->assertEquals(json_encode([
-            'error' => [
-                'message'   => 'No route found for "GET /me1"',
-                'type'      => 'NotFoundHttpException',
-                'code'      => 404
+            'errors' => [
+                [
+                    'message'   => 'No route found for "GET /me1"',
+                    'type'      => 'NotFoundHttpException',
+                    'code'      => 0
+                ]
             ]
         ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), $response->getContent());
     }
